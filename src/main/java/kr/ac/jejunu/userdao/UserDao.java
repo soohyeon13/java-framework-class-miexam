@@ -1,54 +1,164 @@
 package kr.ac.jejunu.userdao;
 
+import javax.sql.DataSource;
 import java.sql.*;
 
 public class UserDao {
+
+    private final DataSource dataSource;
+
+    public UserDao(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
+
     public User get(Long id) throws ClassNotFoundException, SQLException {
-        Connection connection = getConnection();
-        PreparedStatement preparedStatement =
-                connection.prepareStatement("select * from userinfo where id = ?");
-        preparedStatement.setLong(1, id);
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        User user = null;
+        try {
 
-        ResultSet resultSet = preparedStatement.executeQuery();
-        resultSet.next();
+            connection = dataSource.getConnection();
+            preparedStatement = connection.prepareStatement("select * from userinfo where id = ?");
+            preparedStatement.setLong(1, id);
 
-        User user = new User();
-        user.setId(resultSet.getLong("id"));
-        user.setName(resultSet.getString("name"));
-        user.setPassword(resultSet.getString("password"));
+            resultSet = preparedStatement.executeQuery();
 
-        resultSet.close();
-        preparedStatement.close();
-        connection.close();
-        //리턴//
+            if (resultSet.next()) {
+                user = new User();
+                user.setId(resultSet.getLong("id"));
+                user.setName(resultSet.getString("name"));
+                user.setPassword(resultSet.getString("password"));
+            }
+        } finally {
+            if (resultSet != null) {
+                try {
+                    resultSet.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+
+        }
         return user;
     }
 
     public Long add(User user) throws ClassNotFoundException, SQLException {
-        Connection connection = getConnection();
-        PreparedStatement preparedStatement =
-                connection.prepareStatement("insert into userinfo(name, password) VALUES (?,?)");
-        preparedStatement.setString(1,user.getName());
-        preparedStatement.setString(2,user.getPassword());
-        preparedStatement.executeUpdate();
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        Long id = null;
+        try {
+            connection = dataSource.getConnection();
+            preparedStatement = connection.prepareStatement("insert into userinfo(name, password) VALUES (?,?)");
+            preparedStatement.setString(1, user.getName());
+            preparedStatement.setString(2, user.getPassword());
+            preparedStatement.executeUpdate();
 
-        preparedStatement= connection.prepareStatement("select last_insert_id()");
+            id = getLastInsertId(connection);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return id;
+    }
+
+    public void update(User user) throws SQLException {
+
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        try {
+            connection = dataSource.getConnection();
+            preparedStatement = connection.prepareStatement("update userinfo set name=?,password=?where id=?");
+            preparedStatement.setString(1, user.getName());
+            preparedStatement.setString(2, user.getPassword());
+            preparedStatement.setLong(3, user.getId());
+
+            preparedStatement.executeUpdate();
+
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    public void delect(Long id) throws SQLException {
+
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        try {
+            connection = dataSource.getConnection();
+            preparedStatement = connection.prepareStatement("delete from userinfo where id =?");
+            preparedStatement.setLong(1, id);
+
+            preparedStatement.executeUpdate();
+
+            id = getLastInsertId(connection);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    private Long getLastInsertId(Connection connection) throws SQLException {
+        PreparedStatement preparedStatement = connection.prepareStatement("select last_insert_id()");
         ResultSet resultSet = preparedStatement.executeQuery();
 
         resultSet.next();
         Long id = resultSet.getLong(1);
 
         resultSet.close();
-        preparedStatement.close();
-        connection.close();
 
         return id;
-
     }
 
-    private Connection getConnection() throws ClassNotFoundException, SQLException {
-        Class.forName("com.mysql.cj.jdbc.Driver");
-        return DriverManager.getConnection("jdbc:mysql://192.168.0.54/jeju?serverTimezone=UTC"
-                , "jeju", "jejupw");
-    }
 }

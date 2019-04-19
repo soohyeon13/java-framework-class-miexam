@@ -24,8 +24,8 @@ public class DaoFactory {
         return new UserDao(jdbcContext());
     }
     @Bean
-    public JdbcContext jdbcContext() {
-        return new JdbcContext(dataSource());
+    public JejuJdbcTemplate jdbcContext() {
+        return new JejuJdbcTemplate(dataSource());
     }
 
     @Bean

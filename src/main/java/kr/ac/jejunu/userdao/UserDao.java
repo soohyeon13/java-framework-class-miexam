@@ -4,10 +4,7 @@ import java.sql.*;
 
 public class UserDao {
     public User get(Long id) throws ClassNotFoundException, SQLException {
-        Class.forName("com.mysql.cj.jdbc.Driver");
-        Connection connection =
-                DriverManager.getConnection("jdbc:mysql://192.168.0.54/jeju?serverTimezone=UTC"
-                , "jeju", "jejupw");
+        Connection connection = getConnection();
         PreparedStatement preparedStatement =
                 connection.prepareStatement("select * from userinfo where id = ?");
         preparedStatement.setLong(1, id);
@@ -28,10 +25,7 @@ public class UserDao {
     }
 
     public Long add(User user) throws ClassNotFoundException, SQLException {
-        Class.forName("com.mysql.cj.jdbc.Driver");
-        Connection connection =
-                DriverManager.getConnection("jdbc:mysql://192.168.0.54/jeju?serverTimezone=UTC"
-                        , "jeju", "jejupw");
+        Connection connection = getConnection();
         PreparedStatement preparedStatement =
                 connection.prepareStatement("insert into userinfo(name, password) VALUES (?,?)");
         preparedStatement.setString(1,user.getName());
@@ -50,5 +44,11 @@ public class UserDao {
 
         return id;
 
+    }
+
+    private Connection getConnection() throws ClassNotFoundException, SQLException {
+        Class.forName("com.mysql.cj.jdbc.Driver");
+        return DriverManager.getConnection("jdbc:mysql://192.168.0.54/jeju?serverTimezone=UTC"
+                , "jeju", "jejupw");
     }
 }

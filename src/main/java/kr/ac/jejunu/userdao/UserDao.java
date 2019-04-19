@@ -1,36 +1,50 @@
 package kr.ac.jejunu.userdao;
 
-import javax.sql.DataSource;
-import java.sql.*;
+import org.springframework.dao.EmptyResultDataAccessException;
+
 
 public class UserDao {
-    private final JdbcContext jdbcContext;
+    private final JejuJdbcTemplate jdbcTemplate;
 
-    public UserDao(JdbcContext jdbcContext) {
-        this.jdbcContext = jdbcContext;
+    public UserDao(JejuJdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
     }
 
-    public User get(Long id) throws SQLException {
+    public User get(Long id) {
         String sql = "select * from userinfo where id = ?";
-        Object[] params = new Object[]{id};
-        return jdbcContext.get(sql, params);
+        Object[] params = new Object[] {id};
+        User result = null;
+        try {
+            result = jdbcTemplate.queryForObject(sql, params, (rs, rowNum) -> {
+                User user = new User();
+                user.setId(rs.getLong("id"));
+                user.setName(rs.getString("name"));
+                user.setPassword(rs.getString("password"));
+                return user;
+            });
+        } catch (EmptyResultDataAccessException e) {
+        }
+        return result;
     }
 
-    public Long add(User user) throws SQLException {
+
+
+    public Long add(User user) {
         String sql = "insert into userinfo(name, password) values(?, ?)";
-        Object[] params = new Object[]{user.getName(), user.getPassword()};
-        return jdbcContext.add(sql, params);
+        Object[] params = new Object[] {user.getName(), user.getPassword()};
+        return jdbcTemplate.insert(sql, params);
     }
 
-    public void update(User user) throws SQLException {
+    public void update(User user) {
         String sql = "update userinfo set name = ?, password = ? where id = ?";
-        Object[] params = new Object[]{user.getName(), user.getPassword(), user.getId()};
-        jdbcContext.update(sql, params);
+        Object[] params = new Object[] {user.getName(), user.getPassword(), user.getId()};
+        jdbcTemplate.update(sql, params);
     }
 
-    public void delete(User user) throws SQLException {
+    public void delete(User user) {
         String sql = "delete from userinfo where id = ?";
-        Object[] params = new Object[]{user.getId()};
-        jdbcContext.update(sql, params);
+        Object[] params = new Object[] {user.getId()};
+        jdbcTemplate.update(sql, params);
     }
+
 }

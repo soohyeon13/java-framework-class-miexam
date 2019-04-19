@@ -74,7 +74,7 @@ public class UserDaoTests {
         user.setPassword(password);
         Long id = userDao.add(user);
 
-        userDao.delect(id);
+        userDao.delete(user);
 
         user = userDao.get(id);
         assertThat(user, nullValue());
